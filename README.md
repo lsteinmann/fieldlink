@@ -1,7 +1,9 @@
 # idaifield_link
  
+This is a simple qgis-plugin that imports geodata from a Field Desktop project into a vector layer in memory. It is an ad hoc solution produced for myself to accomplish a specific task and has no error handling right now. It works, and you could try it, but it is very fragile. 
 
-the 'couchdb' module needs to be installed first, to do this, open python console in QGIS and type
+# Dependencies
+The [python package `couchdb`](https://couchdb-python.readthedocs.io/en/latest/) needs to be installed first. To do this, you could open the python console in QGIS and type:
 
 ```python
 import pip
