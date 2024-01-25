@@ -14,6 +14,9 @@
    <string>iDAIFieldLink</string>
   </property>
   <widget class="QDialogButtonBox" name="button_box">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>30</x>

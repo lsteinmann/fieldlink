@@ -23,7 +23,7 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QVariant
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QDialogButtonBox
 from qgis.core import QgsProject, Qgis, QgsVectorLayer, QgsFeature, QgsGeometry, QgsField, QgsFields
 from osgeo import ogr
 import couchdb
@@ -195,6 +195,7 @@ class iDAIFieldLink:
         projects = []
         if "idai-field" in fieldConnection.config()['log']['file']:
             self.fieldConnection = fieldConnection
+            self.dlg.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
             for prj in fieldConnection:
                 if str(prj) != "_replicator":
                     projects.append(str(prj))
@@ -212,6 +213,7 @@ class iDAIFieldLink:
         if self.first_start == True:
             self.first_start = False
             self.dlg = iDAIFieldLinkDialog()
+            self.dlg.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
             self.dlg.connectButton.clicked.connect(self.connect_couchdb)
 
 
