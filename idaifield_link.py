@@ -21,11 +21,13 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
-from qgis.core import QgsProject, Qgis
+from qgis.core import QgsProject, Qgis, QgsVectorLayer, QgsFeature, QgsGeometry, QgsField, QgsFields
+from osgeo import ogr
 import couchdb
+import json
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -68,6 +70,9 @@ class iDAIFieldLink:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+
+        # maybe this works
+        self.fieldConnection = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -186,10 +191,11 @@ class iDAIFieldLink:
         adr = adr.replace("http://", "")
         adr = adr.replace("https://", "")
         pwd = self.dlg.password.text()
-        idaifield = couchdb.Server('http://qgis:' + pwd + '@' + adr)
+        fieldConnection = couchdb.Server('http://qgis:' + pwd + '@' + adr)
         projects = []
-        if "idai-field" in idaifield.config()['log']['file']:
-            for prj in idaifield:
+        if "idai-field" in fieldConnection.config()['log']['file']:
+            self.fieldConnection = fieldConnection
+            for prj in fieldConnection:
                 if str(prj) != "_replicator":
                     projects.append(str(prj))
         self.dlg.projectDropdown.clear()
@@ -208,12 +214,82 @@ class iDAIFieldLink:
             self.dlg = iDAIFieldLinkDialog()
             self.dlg.connectButton.clicked.connect(self.connect_couchdb)
 
+
+
+
+
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
+            # 
+            project = self.dlg.projectDropdown.currentText()
+            geomType = self.dlg.geomTypeDropdown.currentText()
+            layername = "idai.field_" + project + "_" + geomType
+
+            # assign the geometry to be queried
+            if geomType == "Point":
+                geomType = ["Point", "MultiPoint"]
+            elif geomType == "Polygon":
+                geomType = ["Polygon", "MultiPolygon"]
+            elif geomType == "LineString":
+                geomType = ["LineString", "MultiLineString"]
+
+
+            # build the query
+            qryFields = [
+                'resource.id', 
+                'resource.identifier', 
+                'resource.category', 'resource.type', 
+                'resource.relations.isRecordedIn', 
+                'resource.relations.liesWithin', 
+                'resource.geometry'
+            ]
+            sel = {'selector': {"resource.geometry.type": {"$in": geomType }}, 'fields': qryFields}
+            
+            fields = QgsFields()
+            fields.append(QgsField("id", QVariant.String, "char", 200))
+            fields.append(QgsField("identifier", QVariant.String, "char", 200))
+            fields.append(QgsField("category", QVariant.String, "char", 200))
+            fields.append(QgsField("relations", QVariant.String, "char", 1000))
+            fields.append(QgsField("geomType", QVariant.String, "char", 50))
+
+            features = []
+            db = self.fieldConnection[project]
+            for item in db.find(sel):
+                # only need info inside resource
+                resource = item['resource']
+                # since we query for geometry, geometry always exists.
+                # we make it into a string and weirdly reformat it for qgis
+                geom = resource['geometry']
+                geom = json.dumps(geom)
+                geom = ogr.CreateGeometryFromJson(geom)
+                geom = QgsGeometry.fromWkt(geom.ExportToWkt())
+                # and we add the fields
+                feature = QgsFeature(fields)
+                # these entries also always exist, because of reasons
+                feature.setAttribute('id', str(resource['id']))
+                feature.setAttribute('identifier', str(resource['identifier']))
+                feature.setAttribute('geomType', str(resource['geometry']['type']))
+                # compensate for entries that may still be 'type' instead of 'category'
+                if 'category' in resource:
+                    feature.setAttribute('category', str(resource['category']))
+                else:
+                    feature.setAttribute('category', str(resource['type']))
+                # can only add relations if they exist.
+                if 'relations' in resource: 
+                    feature.setAttribute('relations', json.dumps(resource['relations']))
+                feature.setGeometry(geom)
+                features.append(feature)
+            
+            # take second element from geomType as geometrytype, because that will be multi and should
+            # make everything work
+            uri = geomType[1] + "?crs=epsg:" + self.dlg.epsg.text()
+            layer = QgsVectorLayer(uri, layername, 'memory')
+            layer.dataProvider().addAttributes(fields)
+            layer.updateFields()
+            layer.dataProvider().addFeatures(features)
+            layer.updateExtents()
+            QgsProject.instance().addMapLayers([layer])
