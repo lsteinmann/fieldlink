@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/idaifield_link" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
