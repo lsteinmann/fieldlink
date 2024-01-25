@@ -203,7 +203,29 @@ class iDAIFieldLink:
         self.dlg.projectDropdown.clear()
         self.dlg.projectDropdown.addItems(projects)
 
-
+    def resource_to_feature(self, resource, fields):
+        # since we query for geometry, geometry always exists.
+        # we make it into a string and weirdly reformat it for qgis
+        geom = resource['geometry']
+        geom = json.dumps(geom)
+        geom = ogr.CreateGeometryFromJson(geom)
+        geom = QgsGeometry.fromWkt(geom.ExportToWkt())
+        # and we add the fields
+        feature = QgsFeature(fields)
+        # these entries also always exist, because of reasons
+        feature.setAttribute('id', str(resource['id']))
+        feature.setAttribute('identifier', str(resource['identifier']))
+        feature.setAttribute('geomType', str(resource['geometry']['type']))
+        # compensate for entries that may still be 'type' instead of 'category'
+        if 'category' in resource:
+            feature.setAttribute('category', str(resource['category']))
+        else:
+            feature.setAttribute('category', str(resource['type']))
+        # can only add relations if they exist.
+        if 'relations' in resource: 
+            feature.setAttribute('relations', json.dumps(resource['relations']))
+        feature.setGeometry(geom)
+        return(feature)
 
 
     def run(self):
@@ -258,27 +280,7 @@ class iDAIFieldLink:
             for item in db.find(sel):
                 # only need info inside resource
                 resource = item['resource']
-                # since we query for geometry, geometry always exists.
-                # we make it into a string and weirdly reformat it for qgis
-                geom = resource['geometry']
-                geom = json.dumps(geom)
-                geom = ogr.CreateGeometryFromJson(geom)
-                geom = QgsGeometry.fromWkt(geom.ExportToWkt())
-                # and we add the fields
-                feature = QgsFeature(fields)
-                # these entries also always exist, because of reasons
-                feature.setAttribute('id', str(resource['id']))
-                feature.setAttribute('identifier', str(resource['identifier']))
-                feature.setAttribute('geomType', str(resource['geometry']['type']))
-                # compensate for entries that may still be 'type' instead of 'category'
-                if 'category' in resource:
-                    feature.setAttribute('category', str(resource['category']))
-                else:
-                    feature.setAttribute('category', str(resource['type']))
-                # can only add relations if they exist.
-                if 'relations' in resource: 
-                    feature.setAttribute('relations', json.dumps(resource['relations']))
-                feature.setGeometry(geom)
+                feature = self.resource_to_feature(resource, fields)
                 features.append(feature)
             
             # take second element from geomType as geometrytype, because that will be multi and should
