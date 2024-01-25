@@ -41,6 +41,9 @@
      <height>20</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>The Field Desktop Client you wish to pull the data from. If not localhost, an adress from the Local Network may be found under &quot;Settings&quot; in Field Desktop.</string>
+   </property>
    <property name="text">
     <string>http://localhost:3001/</string>
    </property>

@@ -195,6 +195,7 @@ class iDAIFieldLink:
         projects = []
         if "idai-field" in fieldConnection.config()['log']['file']:
             self.fieldConnection = fieldConnection
+            self.iface.messageBar().pushSuccess("Connected.", "Can now access Field Desktops project databases.")
             self.dlg.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
             for prj in fieldConnection:
                 if str(prj) != "_replicator":
@@ -206,8 +207,6 @@ class iDAIFieldLink:
 
 
     def run(self):
-        """Run method that performs all the real work"""
-
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
@@ -215,10 +214,6 @@ class iDAIFieldLink:
             self.dlg = iDAIFieldLinkDialog()
             self.dlg.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
             self.dlg.connectButton.clicked.connect(self.connect_couchdb)
-
-
-
-
 
         # show the dialog
         self.dlg.show()
@@ -295,3 +290,4 @@ class iDAIFieldLink:
             layer.dataProvider().addFeatures(features)
             layer.updateExtents()
             QgsProject.instance().addMapLayers([layer])
+            self.iface.messageBar().pushSuccess("Success.", "Added new layer: " + layername)
