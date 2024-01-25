@@ -24,6 +24,8 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+from qgis.core import QgsProject, Qgis
+import couchdb
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -178,6 +180,22 @@ class iDAIFieldLink:
                 self.tr(u'&iDAIFieldLink'),
                 action)
             self.iface.removeToolBarIcon(action)
+    
+    def connect_couchdb(self):
+        adr = self.dlg.serverAddress.text()
+        adr = adr.replace("http://", "")
+        adr = adr.replace("https://", "")
+        pwd = self.dlg.password.text()
+        idaifield = couchdb.Server('http://qgis:' + pwd + '@' + adr)
+        projects = []
+        if "idai-field" in idaifield.config()['log']['file']:
+            for prj in idaifield:
+                if str(prj) != "_replicator":
+                    projects.append(str(prj))
+        self.dlg.projectDropdown.clear()
+        self.dlg.projectDropdown.addItems(projects)
+
+
 
 
     def run(self):
@@ -188,6 +206,7 @@ class iDAIFieldLink:
         if self.first_start == True:
             self.first_start = False
             self.dlg = iDAIFieldLinkDialog()
+            self.dlg.connectButton.clicked.connect(self.connect_couchdb)
 
         # show the dialog
         self.dlg.show()
