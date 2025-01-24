@@ -26,7 +26,7 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDialogButtonBox
 from qgis.core import QgsProject, Qgis, QgsVectorLayer, QgsFeature, QgsGeometry, QgsField, QgsFields
 from osgeo import ogr
-import couchdb
+import requests
 import json
 
 # Initialize Qt resources from file resources.py
@@ -186,22 +186,44 @@ class iDAIFieldLink:
                 action)
             self.iface.removeToolBarIcon(action)
     
-    def connect_couchdb(self):
+    # Raises an Error if 
+    def handle_status(self, response):
+        if "status" in response: 
+            print(f'{response["status"]} - {response["reason"]}')
+            self.iface.messageBar().pushWarning("Error", f'{response["status"]} - {response["reason"]}')
+            return False
+        elif "express-pouchdb" in response: 
+            self.iface.messageBar().pushSuccess("Connected", "Can now access Field Desktops project databases.")
+            return True
+
+    def load_project_list(self):
+        response = requests.get(f"{self.url}/_all_dbs").json()
+        projects = []
+        for prj in response:
+            if str(prj) != "_replicator":
+                projects.append(str(prj))
+        self.dlg.projectDropdown.clear()
+        self.dlg.projectDropdown.addItems(projects)
+        self.dlg.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
+
+
+    def connect_field(self):
         adr = self.dlg.serverAddress.text()
         adr = adr.replace("http://", "")
         adr = adr.replace("https://", "")
         pwd = self.dlg.password.text()
-        fieldConnection = couchdb.Server('http://qgis:' + pwd + '@' + adr)
-        projects = []
-        if "idai-field" in fieldConnection.config()['log']['file']:
-            self.fieldConnection = fieldConnection
-            self.iface.messageBar().pushSuccess("Connected.", "Can now access Field Desktops project databases.")
-            self.dlg.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
-            for prj in fieldConnection:
-                if str(prj) != "_replicator":
-                    projects.append(str(prj))
-        self.dlg.projectDropdown.clear()
-        self.dlg.projectDropdown.addItems(projects)
+        self.url = f'http://qgis:{pwd}@{adr}'
+
+        try: 
+            response = requests.get(f"{self.url}").json()
+            response = self.handle_status(response)
+            if response: 
+                self.load_project_list()
+        except Exception as message: 
+            print(message)
+            self.iface.messageBar().pushWarning("Error", f'Unable to reach {adr} - Is Field Desktop running?')
+
+        
 
     def resource_to_feature(self, resource, fields):
         # since we query for geometry, geometry always exists.
@@ -235,7 +257,7 @@ class iDAIFieldLink:
             self.first_start = False
             self.dlg = iDAIFieldLinkDialog()
             self.dlg.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
-            self.dlg.connectButton.clicked.connect(self.connect_couchdb)
+            self.dlg.connectButton.clicked.connect(self.connect_field)
 
         # show the dialog
         self.dlg.show()
@@ -266,7 +288,7 @@ class iDAIFieldLink:
                 'resource.relations.liesWithin', 
                 'resource.geometry'
             ]
-            sel = {'selector': {"resource.geometry.type": {"$in": geomType }}, 'fields': qryFields}
+            query = {'selector': {"resource.geometry.type": {"$in": geomType }}, 'fields': qryFields}
             
             fields = QgsFields()
             fields.append(QgsField("id", QVariant.String, "char", 200))
@@ -276,8 +298,9 @@ class iDAIFieldLink:
             fields.append(QgsField("geomType", QVariant.String, "char", 50))
 
             features = []
-            db = self.fieldConnection[project]
-            for item in db.find(sel):
+            response = requests.post(f"{self.url}/{project}/_find", json = query).json()
+
+            for item in response["docs"]:
                 # only need info inside resource
                 resource = item['resource']
                 feature = self.resource_to_feature(resource, fields)
