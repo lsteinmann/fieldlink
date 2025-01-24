@@ -187,7 +187,8 @@ class FieldLink:
             self.iface.removeToolBarIcon(action)
     
     # Raises an Error if 
-    def handle_status(self, response):
+    def get_connection_status(self, url):
+        response = requests.get(f"{url}").json()
         if "status" in response: 
             print(f'{response["status"]} - {response["reason"]}')
             self.iface.messageBar().pushWarning("Error", f'{response["status"]} - {response["reason"]}')
@@ -212,12 +213,12 @@ class FieldLink:
         adr = adr.replace("http://", "")
         adr = adr.replace("https://", "")
         pwd = self.dlg.password.text()
-        self.url = f'http://qgis:{pwd}@{adr}'
+        url = f'http://qgis:{pwd}@{adr}'
 
         try: 
-            response = requests.get(f"{self.url}").json()
-            response = self.handle_status(response)
+            response = self.get_connection_status(url)
             if response: 
+                self.url = url
                 self.load_project_list()
         except Exception as message: 
             print(message)
