@@ -8,7 +8,7 @@
 
 """
 
-__author__ = 'lisa.steinmann@rub.de'
+__author__ = 'lisa.steinmann@dainst.de'
 __date__ = '2024-01-25'
 __copyright__ = 'Copyright 2024, Lisa Steinmann'
 
@@ -16,18 +16,18 @@ import unittest
 
 from qgis.PyQt.QtGui import QDialogButtonBox, QDialog
 
-from idaifield_link_dialog import iDAIFieldLinkDialog
+from fieldlink_dialog import FieldLinkDialog
 
 from utilities import get_qgis_app
 QGIS_APP = get_qgis_app()
 
 
-class iDAIFieldLinkDialogTest(unittest.TestCase):
+class FieldLinkDialogTest(unittest.TestCase):
     """Test dialog works."""
 
     def setUp(self):
         """Runs before each test."""
-        self.dialog = iDAIFieldLinkDialog(None)
+        self.dialog = FieldLinkDialog(None)
 
     def tearDown(self):
         """Runs after each test."""
@@ -49,7 +49,7 @@ class iDAIFieldLinkDialogTest(unittest.TestCase):
         self.assertEqual(result, QDialog.Rejected)
 
 if __name__ == "__main__":
-    suite = unittest.makeSuite(iDAIFieldLinkDialogTest)
+    suite = unittest.makeSuite(FieldLinkDialogTest)
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(suite)
 

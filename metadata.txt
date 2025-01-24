@@ -3,12 +3,12 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=iDAIFieldLink
+name=FieldLink
 qgisMinimumVersion=3.0
-description=This Plugin synchs and displays geodata from idai.field 2 / Field Desktop in QGIS.
+description=This plugin displays geodata from iDAI.field / Field Desktop in QGIS.
 version=0.1
 author=Lisa Steinmann
-email=lisa.steinmann@rub.de
+email=lisa.steinmann@dainst.de
 
 about=wip.
 

@@ -1,12 +1,12 @@
 #/***************************************************************************
-# iDAIFieldLink
+# FieldLink
 #
-# This Plugin synchs and displays geodata from idai.field 2 / Field Desktop in QGIS.
+# This plugin displays geodata from iDAI.field / Field Desktop in QGIS.
 #							 -------------------
 #		begin				: 2024-01-25
 #		git sha				: $Format:%H$
 #		copyright			: (C) 2024 by Lisa Steinmann
-#		email				: lisa.steinmann@rub.de
+#		email				: lisa.steinmann@dainst.de
 # ***************************************************************************/
 #
 #/***************************************************************************
@@ -38,15 +38,15 @@ LOCALES =
 # translation
 SOURCES = \
 	__init__.py \
-	idaifield_link.py idaifield_link_dialog.py
+	fieldlink.py fieldlink_dialog.py
 
-PLUGINNAME = idaifield_link
+PLUGINNAME = fieldlink
 
 PY_FILES = \
 	__init__.py \
-	idaifield_link.py idaifield_link_dialog.py
+	fieldlink.py fieldlink_dialog.py
 
-UI_FILES = idaifield_link_dialog_base.ui
+UI_FILES = fieldlink_dialog_base.ui
 
 EXTRAS = metadata.txt icon.png
 

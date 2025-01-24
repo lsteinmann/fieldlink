@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>iDAIFieldLinkDialogBase</class>
- <widget class="QDialog" name="iDAIFieldLinkDialogBase">
+ <class>FieldLinkDialogBase</class>
+ <widget class="QDialog" name="FieldLinkDialogBase">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>iDAIFieldLink</string>
+   <string>FieldLink</string>
   </property>
   <widget class="QDialogButtonBox" name="button_box">
    <property name="enabled">
@@ -231,7 +231,7 @@
   <connection>
    <sender>button_box</sender>
    <signal>accepted()</signal>
-   <receiver>iDAIFieldLinkDialogBase</receiver>
+   <receiver>FieldLinkDialogBase</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -247,7 +247,7 @@
   <connection>
    <sender>button_box</sender>
    <signal>rejected()</signal>
-   <receiver>iDAIFieldLinkDialogBase</receiver>
+   <receiver>FieldLinkDialogBase</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
