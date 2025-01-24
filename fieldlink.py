@@ -180,6 +180,7 @@ class FieldLink:
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
+        
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&FieldLink'),
@@ -188,6 +189,13 @@ class FieldLink:
     
     # Raises an Error if 
     def get_connection_status(self, url):
+        """Handle the status response of pouchDB.
+
+        :param url: The address with pwd + username to check.
+
+        :returns: True if authentication works and the address in question is pouchdb, False otherwise
+        """
+               
         response = requests.get(f"{url}").json()
         if "status" in response: 
             print(f'{response["status"]} - {response["reason"]}')
@@ -198,7 +206,12 @@ class FieldLink:
             return True
 
     def load_project_list(self):
-        response = requests.get(f"{self.url}/_all_dbs").json()
+        """Get the list of projects present in this pouchDB.
+
+        Adds all available projects except _replicator to the Dropdown.
+        """
+
+        response = requests.get(f'{self.url}/_all_dbs').json()
         projects = []
         for prj in response:
             if str(prj) != "_replicator":
@@ -209,6 +222,12 @@ class FieldLink:
 
 
     def connect_field(self):
+        """Check if pouchDB can be reached and set URL accordingly
+
+        Populates the project list if connection can be established.
+
+        """
+
         adr = self.dlg.serverAddress.text()
         adr = adr.replace("http://", "")
         adr = adr.replace("https://", "")
@@ -227,6 +246,13 @@ class FieldLink:
         
 
     def resource_to_feature(self, resource, fields):
+        """Prepare a resource as a feature for QGIS
+        :param resource: ....
+        :param fields: ....
+
+        :returns: ...
+        """
+
         # since we query for geometry, geometry always exists.
         # we make it into a string and weirdly reformat it for qgis
         geom = resource['geometry']
@@ -251,6 +277,11 @@ class FieldLink:
         return(feature)
 
     def get_geomType(self):
+        """Set the correct geometry types
+
+        :returns: 
+        """
+
         geomTypeInput = self.dlg.geomTypeDropdown.currentText()
 
         # assign the geometries to be queried
@@ -265,6 +296,10 @@ class FieldLink:
 
 
     def build_query(self):
+        """Prepares the selector / query for pouchdb _find endpoint
+        :returns: ...
+        """
+
         geomType = self.get_geomType()
 
         # build the query
