@@ -249,6 +249,35 @@ class iDAIFieldLink:
         feature.setGeometry(geom)
         return(feature)
 
+    def get_geomType(self):
+        geomTypeInput = self.dlg.geomTypeDropdown.currentText()
+
+        # assign the geometries to be queried
+        if geomTypeInput == "Point":
+            geomType = ["Point", "MultiPoint"]
+        elif geomTypeInput == "Polygon":
+            geomType = ["Polygon", "MultiPolygon"]
+        elif geomTypeInput == "LineString":
+            geomType = ["LineString", "MultiLineString"]
+
+        return geomType
+
+
+    def build_query(self):
+        geomType = self.get_geomType()
+
+        # build the query
+        qryFields = [
+            'resource.id', 
+            'resource.identifier', 
+            'resource.category', 'resource.type', 
+            'resource.relations.isRecordedIn', 
+            'resource.relations.liesWithin', 
+            'resource.geometry'
+        ]
+        query = {'selector': {"resource.geometry.type": {"$in": geomType }}, 'fields': qryFields}
+
+        return query
 
     def run(self):
         # Create the dialog with elements (after translation) and keep reference
@@ -265,30 +294,11 @@ class iDAIFieldLink:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            # 
             project = self.dlg.projectDropdown.currentText()
-            geomType = self.dlg.geomTypeDropdown.currentText()
-            layername = "idai.field_" + project + "_" + geomType
+            geomType = self.get_geomType()
+            layername = "idai.field_" + project + "_" + geomType[1]
 
-            # assign the geometry to be queried
-            if geomType == "Point":
-                geomType = ["Point", "MultiPoint"]
-            elif geomType == "Polygon":
-                geomType = ["Polygon", "MultiPolygon"]
-            elif geomType == "LineString":
-                geomType = ["LineString", "MultiLineString"]
-
-
-            # build the query
-            qryFields = [
-                'resource.id', 
-                'resource.identifier', 
-                'resource.category', 'resource.type', 
-                'resource.relations.isRecordedIn', 
-                'resource.relations.liesWithin', 
-                'resource.geometry'
-            ]
-            query = {'selector': {"resource.geometry.type": {"$in": geomType }}, 'fields': qryFields}
+            query = self.build_query()
             
             fields = QgsFields()
             fields.append(QgsField("id", QVariant.String, "char", 200))
@@ -303,6 +313,7 @@ class iDAIFieldLink:
             for item in response["docs"]:
                 # only need info inside resource
                 resource = item['resource']
+                print(resource)
                 feature = self.resource_to_feature(resource, fields)
                 features.append(feature)
             
