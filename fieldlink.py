@@ -195,7 +195,7 @@ class FieldLink:
 
         :returns: True if authentication works and the address in question is pouchdb, False otherwise
         """
-               
+
         response = requests.get(f"{url}").json()
         if "status" in response: 
             print(f'{response["status"]} - {response["reason"]}')
@@ -243,7 +243,29 @@ class FieldLink:
             print(message)
             self.iface.messageBar().pushWarning("Error", f'Unable to reach {adr} - Is Field Desktop running?')
 
-        
+    def get_operations(self, project):
+        """Get a list of all Operations from the project database
+
+        :returns: ...
+        """
+        # Ideally, we'd get these from the configuration-endpoint after Field 3.5 to keep it flexible, 
+        # though it is currently not possible to add other categories as Operations
+        operations = ["Survey", "Building", "Trench", "ExcavationArea"]
+        query = {
+            'selector': {
+                "$or": [ 
+                    {"resource.category": {"$in": operations }},
+                    {"resource.type": {"$in": operations }}
+                ]
+            }, 
+            'fields': [ 'resource.id', 'resource.identifier', 'resource.category', 'resource.type']
+        }
+        response = requests.post(f"{self.url}/{project}/_find", json = query).json()
+
+        for item in response["docs"]:
+            # only need info inside resource
+            resource = item['resource']
+            print(resource)
 
     def resource_to_feature(self, resource, fields):
         """Prepare a resource as a feature for QGIS
@@ -349,10 +371,11 @@ class FieldLink:
             for item in response["docs"]:
                 # only need info inside resource
                 resource = item['resource']
-                print(resource)
                 feature = self.resource_to_feature(resource, fields)
                 features.append(feature)
-            
+
+            self.get_operations(project)
+
             # take second element from geomType as geometrytype, because that will be multi and should
             # make everything work
             uri = geomType[1] + "?crs=epsg:" + self.dlg.epsg.text()
