@@ -6,7 +6,7 @@
 name=FieldLink
 qgisMinimumVersion=3.0
 description=This plugin displays geodata from iDAI.field / Field Desktop in QGIS.
-version=0.1
+version=0.2.0.9000
 author=Lisa Steinmann
 email=lisa.steinmann@dainst.de
 
